@@ -86,6 +86,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-client</artifactId>
+      <version>0.96.0-hadoop2</version>
+    </dependency>
+    <dependency>
       <groupId>com.factual</groupId>
       <artifactId>datastore-objects</artifactId>
       <version>1.9.24-SNAPSHOT</version>
