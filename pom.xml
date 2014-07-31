@@ -13,7 +13,13 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-
+  <repositories>
+    <repository>
+      <id>factual</id>
+      <name>Factual nexus repository</name>
+       <url>http://maven.corp.factual.com/nexus/content/groups/public</url>
+    </repository>
+  </repositories>
   <build>
     <sourceDirectory>src/main/java</sourceDirectory>
     <testSourceDirectory>src/test/java</testSourceDirectory>
@@ -88,6 +94,11 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-core</artifactId>
       <version>1.2.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase</artifactId>
+      <version>0.94.19</version>
     </dependency>
   </dependencies>
 </project>
