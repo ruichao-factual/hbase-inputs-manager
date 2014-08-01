@@ -26,7 +26,7 @@ public class Htable {
   public boolean put(String rawInput) {
     try {
       JSONObject obj = new JSONObject(rawInput);
-      String md5 = gson.toJson(obj.get("md5"));
+      String md5 = (String) obj.get("md5");
       JSONObject payload = (JSONObject)obj.get("payload");
       JSONObject inputMeta = (JSONObject)obj.get("inputMeta");
       String processingState = gson.toJson(obj.get("processingState"));
