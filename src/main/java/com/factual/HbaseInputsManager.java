@@ -120,7 +120,7 @@ public class HbaseInputsManager {
       String currentLine;
       while ((currentLine = inputs.readLine()) != null) {
         if (count % 5000 == 0) {
-          System.out.print(count);
+          System.out.println(count);
         }
         if (validateInput(currentLine, validatorType)) {
           htable.put(currentLine);
