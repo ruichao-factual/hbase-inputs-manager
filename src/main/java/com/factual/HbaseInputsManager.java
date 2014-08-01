@@ -50,7 +50,7 @@ public class HbaseInputsManager {
     OptionBuilder.withArgName("label");
     OptionBuilder.hasArg();
     OptionBuilder.withDescription("query label");
-    Option labelOption = OptionBuilder.create("type");
+    Option labelOption = OptionBuilder.create("label");
     
     OptionBuilder.withArgName("value");
     OptionBuilder.hasArg();
@@ -132,7 +132,13 @@ public class HbaseInputsManager {
   
   public void query(String label, String value, String tableName) throws IOException{
     Htable htable = new Htable(tableName);
-    htable.queryPayload(label, value);
+    if (label.equalsIgnoreCase("md5")) {
+      System.out.println(htable.queryMd5(value));
+    } else {
+      for (String record : htable.queryPayload(label, value)) {
+        System.out.println(record);
+      }
+    }
   }
 
   private boolean validateInput(String input, ValidatorTypes inputType) {

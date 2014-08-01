@@ -21,11 +21,15 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.FamilyFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class Htable {
@@ -94,34 +98,30 @@ public class Htable {
   } 
 
   private List<String> query(String family, String column, String value) {
-    Scan scan = new Scan();
-    
     List<Filter> filters = new ArrayList<Filter>();
     SingleColumnValueFilter scValueFilter = new SingleColumnValueFilter(Bytes.toBytes(family), Bytes.toBytes(column), CompareFilter.CompareOp.EQUAL, new RegexStringComparator(value, Pattern.CASE_INSENSITIVE));
     filters.add(scValueFilter);
     
     FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL, filters);
+
+    Scan scan = new Scan();
     scan.setFilter(filterList);
+    scan.addColumn(Bytes.toBytes(family), Bytes.toBytes(column));
     
     ResultScanner scanner = null;
-	try {
-		scanner = hTable.getScanner(scan);
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
-
     List<String> queryResults = new ArrayList<String>();
-    try {
+	try {
+	  scanner = hTable.getScanner(scan);
       for (Result rowResult : scanner) {
-        queryResults.add(getJsonFromResult(rowResult));
+        queryResults.add(queryMd5(Bytes.toString(rowResult.getRow())));
       }
-    } catch (JSONException e) {
+	} catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
 	} finally {
       scanner.close();
     }
+
     return queryResults;
   }
 
