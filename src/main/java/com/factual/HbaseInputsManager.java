@@ -1,33 +1,112 @@
 package com.factual;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.Map;
 
 import com.factual.util.Htable;
+import com.factual.validation.InputValidators.Validator;
+import com.factual.validation.InputValidators.ValidatorFactory;
+import com.factual.validation.InputValidators.ValidatorFactory.ValidatorTypes;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import org.apache.commons.cli.*;
 
 public class HbaseInputsManager {
-  public static void main(String[] args) throws IOException {
-    // Option help = new Option("h", "prints this message");
-    // OptionBuilder.withArgName("command");
-    // OptionBuilder.hasArg();
-    // OptionBuilder.withDescription("command [put, search, update]");
-   // Option command = OptionBuilder.create("c");
-    //String rawInput = "{\"md5\":\"1b4a2e612ddca716e\",\"payload\":{\"name\":\"香港丽思卡尔顿酒店\",\"address\":\"上海`油尖旺区尖沙咀柯士甸道西1号环球贸易广场102-118楼\",\"tel\":\"852 2263 2263\",\"website\":\"http://www.ritzcarlton.com/zh-cn/Properties/HongKong/Default.htm\",\"category_labels\":[\"hotel\"],\"latitude\":\"22.30348018828219\",\"longitude\":\"114.16021227836609\",\"foreign_id\":\"297\",\"country\":\"hk\",\"hours\":null},\"inputMeta\":{\"origin\":\"SEED\",\"sourceUrl\":\"http://www.160.com.hk/hotel/bencandy-htm-city_id-1-fid-24-id-297.html\",\"notes\":{\"_rs_id\":1367,\"_ds_id\":28,\"_rs_v\":1378268958},\"targetViewAlias\":\"places-hk\"},\"processingState\":\"UNPROCESSED\",\"inputDate\":1378290224000}\t";
-    //System.out.println("start");
-    //System.out.println(rawInput);
-    //Htable htable = new Htable("hk");
-    //htable.put(rawInput);
-    //System.out.println("done");
 
+  final Map<String, ValidatorTypes> inputTypeToValidatorType = ImmutableMap.<String, ValidatorTypes>builder()
+      .put("raw_input", ValidatorTypes.RAW_DATA_KEY)
+      .put("uuid_attachment", ValidatorTypes.UUID_ATTACHMENT_KEY)
+      .put("md5_attachment", ValidatorTypes.MD5_ATTACHMENT_KEY)
+      .put("validation", ValidatorTypes.VALIDATION_DATA_KEY)
+      .build();
+
+  private Gson gson = new Gson();
+  public static final void main(String[] args) throws IOException {
+    Option help = new Option("h", "prints this message");
+    OptionBuilder.withArgName("cmd");
+    OptionBuilder.hasArg();
+    OptionBuilder.withDescription("command [put, search, update]");
+    Option cmdOption = OptionBuilder.create("cmd");
+
+    OptionBuilder.withArgName("type");
+    OptionBuilder.hasArg();
+    OptionBuilder.withDescription("Type [raw_input, uuid_attachment, md5_attachment, validation]");
+    Option typeOption = OptionBuilder.create("type");
+
+
+    OptionBuilder.withArgName("file");
+    OptionBuilder.hasArg();
+    OptionBuilder.withDescription("path to input file");
+    Option fileOption = OptionBuilder.create("file");
+
+    OptionBuilder.withArgName("country");
+    OptionBuilder.hasArg();
+    OptionBuilder.withDescription("path to input file");
+    Option countryOption = OptionBuilder.create("country");
+
+    Options options = new Options();
+    options.addOption(help);
+    options.addOption(cmdOption);
+    options.addOption(typeOption);
+    options.addOption(fileOption);
+    options.addOption(countryOption);
+
+    CommandLineParser parser = new GnuParser();
+    try {
+      CommandLine line = parser.parse(options, args);
+      String command = "";
+      if (line.hasOption("cmd")) {
+        command = line.getOptionValue("cmd");
+      }
+      String file = "";
+      if (line.hasOption("file")) {
+        file = line.getOptionValue("file");
+      }
+      String inputType="";
+      if (line.hasOption("type")) {
+        inputType = line.getOptionValue("type");
+      }
+      String country="";
+      if (line.hasOption("country")) {
+        country = line.getOptionValue("country");
+      }
+
+      if (command.equals("upload")) {
+        new HbaseInputsManager().upload(file, country, inputType);
+      }
+
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    String rawInput = "{\"md5\":\"006c669f4aad31d1b4ace612ddca716e\",\"payload\":{\"name\":\"香港丽思卡尔顿酒店\",\"address\":\"九龙油尖旺区尖沙咀柯士甸道西1号环球贸易广场102-118楼\",\"tel\":\"852 2263 2263\",\"website\":\"http://www.ritzcarlton.com/zh-cn/Properties/HongKong/Default.htm\",\"category_labels\":[\"hotel\"],\"latitude\":\"22.30348018828219\",\"longitude\":\"114.16021227836609\",\"foreign_id\":\"297\",\"country\":\"hk\",\"hours\":null},\"inputMeta\":{\"origin\":\"SEED\",\"sourceUrl\":\"http://www.160.com.hk/hotel/bencandy-htm-city_id-1-fid-24-id-297.html\",\"notes\":{\"_rs_id\":1367,\"_ds_id\":28,\"_rs_v\":1378268958},\"targetViewAlias\":\"places-hk\"},\"processingState\":\"UNPROCESSED\",\"inputDate\":1378290224000}\t";
     Htable htable = new Htable("hk");
-    for (String result : htable.queryPayload("address", "九龙")) {
-      System.out.println(result);
+    htable.put(rawInput);
+  }
+
+  public void upload(String inputPath, String tableName, String inputType) throws Exception{
+    Htable htable = new Htable(tableName);
+    ValidatorTypes validatorType = inputTypeToValidatorType.get(inputType);
+    try {
+      BufferedReader inputs = new BufferedReader(new FileReader(inputPath));
+      String currentLine;
+      while ((currentLine = inputs.readLine()) != null) {
+        if (validateInput(currentLine, validatorType)) {
+          htable.put(currentLine);
+        }
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
     }
-    System.out.println("-------");
-    for (String result : htable.queryPayload("address", "上海")) {
-      System.out.println(result);
-    }
-    System.out.println("-------");
-    System.out.println(htable.queryMd5("006c669f4aad31d1b4ace612ddca716e"));
+  }
+
+  private boolean validateInput(String input, ValidatorTypes inputType) {
+    Validator validator = ValidatorFactory.getValidator(input, inputType);
+    validator.validate();
+    return validator.isValid();
   }
 }
