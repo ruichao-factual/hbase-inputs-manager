@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.gson.Gson;
@@ -23,6 +24,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -67,7 +69,7 @@ public class Htable {
     }
   }
   
-  public String queryMd5(String md5) {
+  public String queryMd5(String md5) throws JSONException {
     Get row = new Get(Bytes.toBytes(md5));
     Result result = null;
 	try {
@@ -79,7 +81,7 @@ public class Htable {
     return getJsonFromResult(result);
   }
 
-  private List<String> query(String family, String column, String value) {
+  private List<String> query(String family, String column, String value) throws IOException, JSONException {
     Scan scan = new Scan();
     
     List<Filter> filters = new ArrayList<Filter>();
@@ -102,15 +104,29 @@ public class Htable {
     return queryResults;
   }
 
-  private String getJsonFromResult(Result row) {
+  private String getJsonFromResult(Result row) throws JSONException {
+    JSONObject json = new JSONObject();
+    JSONObject payload  = new JSONObject();
+    JSONObject inputMeta = new JSONObject();
+    String md5 = Bytes.toString(row.getRow());
     for (KeyValue keyValue : row.raw()) {
-      String md5 = Bytes.toString(keyValue.getRow());
       String family = Bytes.toString(keyValue.getFamily());
       String qualifier = Bytes.toString(keyValue.getQualifier());
-      long latestTime = keyValue.getTimestamp();
+      String value = Bytes.toString(keyValue.getValue());
+      
+      if ("payload".equals(family)){
+        payload.put(qualifier, value);
+      } else if ("inputMeta".equals(family)){
+        inputMeta.put(qualifier, value);
+      } else {
+        json.put(qualifier, value);
+      }
     }
-    // TODO: Organize JSON
-    return "";
+    
+    json.put("payload", payload);
+    json.put("inputMeta", inputMeta);
+    json.put("md5", md5);
+    return json.toString();
   }
 
 }
