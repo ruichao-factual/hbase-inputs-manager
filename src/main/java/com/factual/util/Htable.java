@@ -3,13 +3,27 @@ import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.KeyValue;
+
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Pattern;
 
 import org.json.JSONObject;
+
 import com.google.gson.Gson;
 
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class Htable {
@@ -52,4 +66,51 @@ public class Htable {
       put.add(Bytes.toBytes(familyName), Bytes.toBytes(stringKey), Bytes.toBytes(value));
     }
   }
+  
+  public String queryMd5(String md5) {
+    Get row = new Get(Bytes.toBytes(md5));
+    Result result = null;
+	try {
+	  result = hTable.get(row);
+    } catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+    }
+    return getJsonFromResult(result);
+  }
+
+  private List<String> query(String family, String column, String value) {
+    Scan scan = new Scan();
+    
+    List<Filter> filters = new ArrayList<Filter>();
+    SingleColumnValueFilter scValueFilter = new SingleColumnValueFilter(Bytes.toBytes(family), Bytes.toBytes(column), CompareFilter.CompareOp.EQUAL, new RegexStringComparator(value, Pattern.CASE_INSENSITIVE));
+    filters.add(scValueFilter);
+    
+    FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL, filters);
+    scan.setFilter(filterList);
+    
+    ResultScanner scanner = hTable.getScanner(scan);
+    List<String> queryResults = new ArrayList<String>();
+    
+    try {
+      for (Result rowResult : scanner) {
+        queryResults.add(getJsonFromResult(rowResult));
+      }
+    } finally {
+      scanner.close();
+    }
+    return queryResults;
+  }
+
+  private String getJsonFromResult(Result row) {
+    for (KeyValue keyValue : row.raw()) {
+      String md5 = Bytes.toString(keyValue.getRow());
+      String family = Bytes.toString(keyValue.getFamily());
+      String qualifier = Bytes.toString(keyValue.getQualifier());
+      long latestTime = keyValue.getTimestamp();
+    }
+    // TODO: Organize JSON
+    return "";
+  }
+
 }
