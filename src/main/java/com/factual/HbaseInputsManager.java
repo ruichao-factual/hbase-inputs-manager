@@ -2,6 +2,7 @@ package com.factual;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.Map;
 
@@ -112,6 +113,8 @@ public class HbaseInputsManager {
   }
 
   public void upload(String inputPath, String tableName, String inputType) throws Exception{
+    PrintWriter errorInput = new PrintWriter("errorInput.txt");
+    PrintWriter errors = new PrintWriter("errors.txt");
     int count = 0;
     Htable htable = new Htable(tableName);
     ValidatorTypes validatorType = inputTypeToValidatorType.get(inputType);
@@ -122,11 +125,15 @@ public class HbaseInputsManager {
         if (count % 5000 == 0) {
           System.out.println(count);
         }
-        if (validateInput(currentLine, validatorType)) {
+        if (validateInput(currentLine, validatorType, errors)) {
           htable.put(currentLine);
+        } else {
+          errorInput.println(currentLine);
         }
         count += 1;
       }
+      errorInput.close();
+      errors.close();
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -143,9 +150,13 @@ public class HbaseInputsManager {
     }
   }
 
-  private boolean validateInput(String input, ValidatorTypes inputType) {
+  private boolean validateInput(String input, ValidatorTypes inputType, PrintWriter errors) {
     Validator validator = ValidatorFactory.getValidator(input, inputType);
     validator.validate();
+    if (!validator.isValid()) {
+      errors.println(input);
+      errors.println(validator.getValidationErrorsAsString());
+    }
     return validator.isValid();
   }
 }
