@@ -47,13 +47,25 @@ public class HbaseInputsManager {
     OptionBuilder.withDescription("path to input file");
     Option countryOption = OptionBuilder.create("country");
 
+    OptionBuilder.withArgName("label");
+    OptionBuilder.hasArg();
+    OptionBuilder.withDescription("query label");
+    Option labelOption = OptionBuilder.create("type");
+    
+    OptionBuilder.withArgName("value");
+    OptionBuilder.hasArg();
+    OptionBuilder.withDescription("query value");
+    Option valueOption = OptionBuilder.create("value");
+    
     Options options = new Options();
     options.addOption(help);
     options.addOption(cmdOption);
     options.addOption(typeOption);
     options.addOption(fileOption);
     options.addOption(countryOption);
-
+    options.addOption(labelOption);
+    options.addOption(valueOption);
+    
     CommandLineParser parser = new GnuParser();
     try {
       CommandLine line = parser.parse(options, args);
