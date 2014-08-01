@@ -69,19 +69,31 @@ public class Htable {
     }
   }
   
-  public String queryMd5(String md5) throws JSONException {
+  public String queryMd5(String md5) {
     Get row = new Get(Bytes.toBytes(md5));
-    Result result = null;
+    Result queryResult = null;
 	try {
-	  result = hTable.get(row);
+	  queryResult = hTable.get(row);
     } catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
     }
-    return getJsonFromResult(result);
+	
+	String result = null;
+    try {
+      result = getJsonFromResult(queryResult);
+	} catch (JSONException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+    return result;
   }
+  
+  public List<String>queryPayload(String label, String value) {
+    return query("payload", label, value);
+  } 
 
-  private List<String> query(String family, String column, String value) throws IOException, JSONException {
+  private List<String> query(String family, String column, String value) {
     Scan scan = new Scan();
     
     List<Filter> filters = new ArrayList<Filter>();
@@ -91,14 +103,23 @@ public class Htable {
     FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL, filters);
     scan.setFilter(filterList);
     
-    ResultScanner scanner = hTable.getScanner(scan);
+    ResultScanner scanner = null;
+	try {
+		scanner = hTable.getScanner(scan);
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+
     List<String> queryResults = new ArrayList<String>();
-    
     try {
       for (Result rowResult : scanner) {
         queryResults.add(getJsonFromResult(rowResult));
       }
-    } finally {
+    } catch (JSONException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} finally {
       scanner.close();
     }
     return queryResults;
