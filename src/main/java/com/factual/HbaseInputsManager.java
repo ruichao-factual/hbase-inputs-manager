@@ -2,38 +2,21 @@ package com.factual;
 
 import java.io.IOException;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.util.Bytes;
-
+import com.factual.util.Htable;
 import org.apache.commons.cli.*;
 
-
-// Class that has nothing but a main.
-// Does a Put, Get and a Scan against an hbase table.
 public class HbaseInputsManager {
   public static void main(String[] args) throws IOException {
-    Option help = new Option("h", "prints this message");
-    OptionBuilder.withArgName("command");
-    OptionBuilder.hasArg();
-    OptionBuilder.withDescription("command [put, search, update]");
-    Option command = OptionBuilder.create("c");
-
-
-
-
-    Configuration conf = HBaseConfiguration.create();
-    HTable hTable = new HTable(conf, "HBaseSamples");
-    Put put1 = new Put(Bytes.toBytes("row1"));
-    put1.add(Bytes.toBytes("test"), Bytes.toBytes("col3"), Bytes.toBytes("value4"));
-    put1.add(Bytes.toBytes("test"), Bytes.toBytes("col5"), Bytes.toBytes("value6"));
-    hTable.put(put1);
-    hTable.close();
+    // Option help = new Option("h", "prints this message");
+    // OptionBuilder.withArgName("command");
+    // OptionBuilder.hasArg();
+    // OptionBuilder.withDescription("command [put, search, update]");
+   // Option command = OptionBuilder.create("c");
+    String rawInput = "{\"md5\":\"006c669f4aad31d1b4ace612ddca716e\",\"payload\":{\"name\":\"香港丽思卡尔顿酒店\",\"address\":\"九龙油尖旺区尖沙咀柯士甸道西1号环球贸易广场102-118楼\",\"tel\":\"852 2263 2263\",\"website\":\"http://www.ritzcarlton.com/zh-cn/Properties/HongKong/Default.htm\",\"category_labels\":[\"hotel\"],\"latitude\":\"22.30348018828219\",\"longitude\":\"114.16021227836609\",\"foreign_id\":\"297\",\"country\":\"hk\",\"hours\":null},\"inputMeta\":{\"origin\":\"SEED\",\"sourceUrl\":\"http://www.160.com.hk/hotel/bencandy-htm-city_id-1-fid-24-id-297.html\",\"notes\":{\"_rs_id\":1367,\"_ds_id\":28,\"_rs_v\":1378268958},\"targetViewAlias\":\"places-hk\"},\"processingState\":\"UNPROCESSED\",\"inputDate\":1378290224000}\t";
+    System.out.println("start");
+    System.out.println(rawInput);
+    Htable htable = new Htable("hk");
+    htable.put(rawInput);
+    System.out.println("done");
   }
 }
