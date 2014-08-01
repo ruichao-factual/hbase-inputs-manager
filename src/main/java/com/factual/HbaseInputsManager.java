@@ -112,15 +112,20 @@ public class HbaseInputsManager {
   }
 
   public void upload(String inputPath, String tableName, String inputType) throws Exception{
+    int count = 0;
     Htable htable = new Htable(tableName);
     ValidatorTypes validatorType = inputTypeToValidatorType.get(inputType);
     try {
       BufferedReader inputs = new BufferedReader(new FileReader(inputPath));
       String currentLine;
       while ((currentLine = inputs.readLine()) != null) {
+        if (count % 5000 == 0) {
+          System.out.print(count);
+        }
         if (validateInput(currentLine, validatorType)) {
           htable.put(currentLine);
         }
+        count += 1;
       }
     } catch (IOException e) {
       e.printStackTrace();
