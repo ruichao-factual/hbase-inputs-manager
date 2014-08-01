@@ -73,11 +73,25 @@ public class HbaseInputsManager {
       if (line.hasOption("country")) {
         country = line.getOptionValue("country");
       }
+      String queryLabel="";
+      if (line.hasOption("label")) {
+        queryLabel = line.getOptionValue("label");
+      }
+      String queryValue="";
+      if (line.hasOption("value")) {
+        queryValue = line.getOptionValue("value");
+      }
 
       if (command.equals("upload")) {
         new HbaseInputsManager().upload(file, country, inputType);
       }
-
+      
+      if (command.equals("query")) {
+        if (queryLabel != null && queryValue != null 
+            && !"".equals(queryLabel) && !"".equals(queryValue)){
+          new HbaseInputsManager().query(queryLabel, queryValue, country);
+        }
+      }
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -102,6 +116,11 @@ public class HbaseInputsManager {
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+  
+  public void query(String label, String value, String tableName) throws IOException{
+    Htable htable = new Htable(tableName);
+    htable.queryPayload(label, value);
   }
 
   private boolean validateInput(String input, ValidatorTypes inputType) {
